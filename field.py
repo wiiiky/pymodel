@@ -1,11 +1,17 @@
 #coding=utf8
 
 
+import itertools
+
 
 class BaseField:
     """docstring for BaseField"""
+
+    _counter = itertools.count()
+
     def __init__(self, **kwargs):
         self.null = False
+        self._order = BaseField._counter.next()
         for k, v in kwargs.items():
             self[k] = v
 

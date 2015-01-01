@@ -29,14 +29,13 @@ if not DB_NAME or not DB_USER or not DB_PASSWORD or not DB_HOST:
 
 
 class BaseModel:
+    """docstring for BaseModel"""
 
     pk = IntegerField(primary_key = True,auto_increment = True)
 
-    """docstring for BaseModel"""
     def __init__(self):
-        self.__dict__ = {}
-
-        self.__columns__ = {}
+        self._fields = []   # 记录列名以及类型
+        self._values = {}
 
         bases = self.__class__.__bases__
         while bases:
@@ -44,26 +43,30 @@ class BaseModel:
                 if issubclass(b, BaseModel):
                     for k, v in b.__dict__.items():
                         if issubclass(v.__class__, BaseField):
-                            self.__columns__[k] = v
+                            self._fields.append((k,v))
 
                     bases = b.__bases__
                     break
 
         for k, v in self.__class__.__dict__.items():
             if issubclass(v.__class__, BaseField):
-                self.__columns__[k] = v
+                self._fields.append((k,v))
 
-        for k, v in self.__columns__.items():
+        self._fields.sort(lambda x, y : x[1]._order - y[1]._order)
+        for k, v in self._fields:
             self[k] = v.default_value()
 
-
     def __setitem__(self, k, v):
-        self.__dict__[k] = v
+        self._values[k] = v
 
     def __getitem__(self, k):
-        if self.__dict__.has_key(k):
-            return self.__dict__[k]
+        if self._values.has_key(k):
+            return self._values[k]
         return None
+
+    def filter(self, **kwargs):
+        pass
+
 
     def drop(self):
         statement = 'drop table if exists %s' % self.__class__.__name__
@@ -75,7 +78,7 @@ class BaseModel:
         statement = 'create table %s' % self.__class__.__name__ 
 
         cols = []
-        for k, v in self.__columns__.items():
+        for k, v in self._fields:
             cols.append(v.format(k))
 
         statement += '(' + ','.join(cols) + ')'
@@ -86,6 +89,7 @@ class BaseModel:
 
     @staticmethod
     def db_connection():
+        """threading.local()线程专有数据"""
         global DB_HOST,DB_PASSWORD,DB_USER,DB_NAME
         tdata = threading.local()
         myconn = None
