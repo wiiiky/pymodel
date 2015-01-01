@@ -26,7 +26,7 @@ class BaseField:
     def value_type(self):
         self.exception('uncompleted')
 
-    def format(self):
+    def format(self, _id = ''):
         s = ''
         if self['null'] == False:
             s += ' not null'
@@ -60,10 +60,10 @@ class BaseField:
 class IntegerField(BaseField):
     """docstring for IntegerField"""
 
-    def format(self):
-        s = 'int'
+    def format(self, _id = ''):
+        s = '%s int' % _id
         if self.isinstance('max_length', int):
-            s = 'int(%d)' % self.max_length
+            s = '%s int(%d)' % (_id, self.max_length)
 
         if self['auto_increment'] == True:
             s += ' auto_increment'
@@ -78,17 +78,31 @@ class IntegerField(BaseField):
 class CharField(BaseField):
     """docstring for CharField"""
 
-    def format(self):
+    def format(self, _id = ''):
         s = ''
         if not self.isinstance('max_length', int):
             raise Exception('CharField')
-        s = 'varchar(%d)' % self.max_length
+        s = '%s varchar(%d)' % (_id, self.max_length)
 
         return s + BaseField.format(self)
 
 
     def value_type(self):
         return str
+
+
+class ForeignField(IntegerField):
+    """docstring for Foreign"""
+
+    def __init__(self, klass, **kwargs):
+        IntegerField.__init__(self, **kwargs)
+        self.klass = klass
+
+    def format(self, _id):
+        s = IntegerField.format(self, _id)
+        s += ',foreign key(%s) references %s(pk)' % (_id, self.klass.__name__)
+        return s
+        
         
 
 

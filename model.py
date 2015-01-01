@@ -76,7 +76,7 @@ class BaseModel:
 
         cols = []
         for k, v in self.__columns__.items():
-            cols.append('%s %s' % (k, v.format()))
+            cols.append(v.format(k))
 
         statement += '(' + ','.join(cols) + ')'
         print statement
