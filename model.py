@@ -65,35 +65,13 @@ class BaseModel:
             return self.__dict__[k]
         return None
 
-    @staticmethod
-    def get_connection():
-        global DB_HOST,DB_PASSWORD,DB_USER,DB_NAME
-        tdata = threading.local()
-        myconn = None
-        try:
-            myconn = tdata.myconn
-        except:
-            tdata.myconn = MySQLdb.connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME)
-            tdata.myconn.autocommit(1)
-
-        myconn = tdata.myconn
-        return myconn
-
-
     def drop(self):
         statement = 'drop table if exists %s' % self.__class__.__name__
 
-        myconn = BaseModel.get_connection()
-
-        cursor = myconn.cursor()
-        ret = cursor.execute(statement)
-        cursor.close()
-        return ret
+        BaseModel.db_execute(statement)
 
 
     def create(self):
-        myconn = BaseModel.get_connection()
-
         statement = 'create table %s' % self.__class__.__name__ 
 
         cols = []
@@ -103,8 +81,45 @@ class BaseModel:
         statement += '(' + ','.join(cols) + ')'
         print statement
 
-        cursor = myconn.cursor()
-        ret = cursor.execute(statement)
-        cursor.close()
+        BaseModel.db_execute(statement)
 
-        return ret
+
+    @staticmethod
+    def db_connection():
+        global DB_HOST,DB_PASSWORD,DB_USER,DB_NAME
+        tdata = threading.local()
+        myconn = None
+        try:
+            myconn = tdata.myconn
+        except:
+            myconn = BaseModel.db_reconnect()
+
+        return myconn
+
+    @staticmethod
+    def db_reconnect():
+        global DB_HOST,DB_PASSWORD,DB_USER,DB_NAME
+        tdata = threading.local()
+        try:
+            tdata.myconn = MySQLdb.connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME)
+            tdata.myconn.autocommit(1)
+        except:
+            tdata.myconn = None
+        return tdata.myconn
+
+    @staticmethod
+    def db_execute(statement, args=None):
+        myconn = BaseModel.db_connection()
+
+        for i in range(0, 2):
+            try:
+                cursor = myconn.cursor()
+                cursor.execute(statement, args)
+                rows = cursor.fetchall()
+                cursor.close()
+            except MySQLdb.OperationalError as e:
+                myconn = BaseModel.db_reconnect()
+                continue
+            return rows
+
+        raise Exception('db_execute fails')
