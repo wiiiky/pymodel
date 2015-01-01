@@ -2,30 +2,7 @@
 
 
 from field import *
-from setting import *
-import threading
-import MySQLdb
-
-thread_data = threading.local()
-
-
-DB_NAME = None
-DB_USER = None
-DB_PASSWORD = None
-DB_HOST = None
-
-for k, v in MYSQL_SETTINGS.items():
-    if k == 'name':
-        DB_NAME = v
-    elif k == 'user':
-        DB_USER = v
-    elif k == 'password':
-        DB_PASSWORD = v
-    elif k == 'host':
-        DB_HOST = v
-
-if not DB_NAME or not DB_USER or not DB_PASSWORD or not DB_HOST:
-    raise Exception('MySQL setting not found')
+from mysql import *
 
 
 class BaseModel(object):
@@ -82,7 +59,7 @@ class BaseModel(object):
         if where:
             statement += ' where ' + ' and '.join(where)
 
-        rows = BaseModel.db_execute(statement,args)
+        rows = db_execute(statement,args)
         l = []
         for row in rows:
             c = self.__class__()
@@ -95,7 +72,7 @@ class BaseModel(object):
     def drop(self):
         statement = 'drop table if exists %s' % self.__class__.__name__
 
-        BaseModel.db_execute(statement)
+        db_execute(statement)
 
 
     def create(self):
@@ -108,46 +85,4 @@ class BaseModel(object):
         statement += '(' + ','.join(cols) + ')'
         print statement
 
-        BaseModel.db_execute(statement)
-
-
-    @staticmethod
-    def db_connection():
-        """threading.local()线程专有数据"""
-        global DB_HOST,DB_PASSWORD,DB_USER,DB_NAME
-        tdata = threading.local()
-        myconn = None
-        try:
-            myconn = tdata.myconn
-        except:
-            myconn = BaseModel.db_reconnect()
-
-        return myconn
-
-    @staticmethod
-    def db_reconnect():
-        global DB_HOST,DB_PASSWORD,DB_USER,DB_NAME
-        tdata = threading.local()
-        try:
-            tdata.myconn = MySQLdb.connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME)
-            tdata.myconn.autocommit(1)
-        except:
-            tdata.myconn = None
-        return tdata.myconn
-
-    @staticmethod
-    def db_execute(statement, args=None):
-        myconn = BaseModel.db_connection()
-
-        for i in range(0, 2):
-            try:
-                cursor = myconn.cursor()
-                cursor.execute(statement, args)
-                rows = cursor.fetchall()
-                cursor.close()
-            except MySQLdb.OperationalError as e:
-                myconn = BaseModel.db_reconnect()
-                continue
-            return rows
-
-        raise Exception('db_execute fails')
+        db_execute(statement)
