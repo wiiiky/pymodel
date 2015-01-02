@@ -49,18 +49,22 @@ def db_connection():
 
     return myconn
 
-def db_execute(statement, args=None):
+def db_execute(statement, args=None, **kwargs):
     myconn = db_connection()
 
     for i in range(0, 2):
+        ret = None
         try:
             cursor = myconn.cursor()
             cursor.execute(statement, args)
-            rows = cursor.fetchall()
+            if ('lastrowid', True) in kwargs.items():
+                ret = cursor.lastrowid
+            else:
+                ret = cursor.fetchall()
             cursor.close()
         except MySQLdb.OperationalError as e:
             myconn = db_reconnect()
             continue
-        return rows
+        return ret
 
     raise Exception('db_execute fails')
