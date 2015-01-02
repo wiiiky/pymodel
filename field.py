@@ -4,16 +4,22 @@
 import itertools
 
 
-class BaseField:
+class BaseField(object):
     """docstring for BaseField"""
 
     _counter = itertools.count()
 
     def __init__(self, **kwargs):
+        object.__init__(self)
+        self.kwargs = kwargs
         self.null = False
         self._order = BaseField._counter.next()
         for k, v in kwargs.items():
             self[k] = v
+        self._value = None
+
+    def __copy__(self):
+        return self.__class__(**self.kwargs)
 
     def __setitem__(self, k, v):
         self.__dict__[k] = v
@@ -61,13 +67,20 @@ class BaseField:
     def exception(self, s):
         raise Exception('%s: %s' % (self.klass_name(), s))
 
+    def get_value(self):
+        if not self._value:
+            return self.default_value()
+        return self._value
+
+    def set_value(self, v):
+        self._value = v
 
 
-class IntegerField(BaseField):
-    """docstring for IntegerField"""
+class IntegerBaseField(BaseField):
+    """docstring for IntegerBaseField"""
 
     def format(self, _id = ''):
-        s = '%s int' % _id
+        s = '%s %s' % (_id, self._integertype())
         if self.isinstance('max_length', int):
             s = '%s int(%d)' % (_id, self.max_length)
 
@@ -79,6 +92,30 @@ class IntegerField(BaseField):
 
     def value_type(self):
         return int
+        
+
+class IntegerField(IntegerBaseField):
+    """docstring for IntegerField"""
+
+    def _integertype(self):
+        return 'int'
+
+
+class BigIntegerField(IntegerBaseField):
+    """docstring for BigInteger"""
+
+    def _integertype(self):
+        return 'bigint'
+
+
+class BooleanField(IntegerBaseField):
+    """docstring for BooleanField"""
+
+    def format(self, _id = ''):
+        s = '%s tinyint(1)' % _id
+        return s + BaseField.format(self)
+        
+        
 
 
 class CharField(BaseField):

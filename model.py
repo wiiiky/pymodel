@@ -3,6 +3,9 @@
 
 from field import *
 from mysql import *
+from collections import OrderedDict
+from copy import copy
+
 
 
 class BaseModel(object):
@@ -10,48 +13,74 @@ class BaseModel(object):
 
     pk = IntegerField(primary_key = True,auto_increment = True)
 
-    _fields = []
+    # def __new__(klass, **kwargs):
+    #     obj = object.__new__(klass, klass.__name__, (), {})
+    #     return obj
 
-    def __init__(self):
-        for k, v in self._getfields():
-            self[k] = v.default_value()
+    def __init__(self, **kwargs):
+        self._fields = []
+        self._fields = self.getfields()
+        for k, v in self._fields:
+            if issubclass(v.__class__, BaseField):
+                f = copy(v)
+                self.__dict__[k] = f
+        for k, v in kwargs.items():
+            if hasattr(self, k) :
+                setattr(self, k, v)
+            else:
+                raise Exception('unknown field %s' % k)
 
-    def __setitem__(self, k, v):
-        self.__dict__[k] = v
 
-    def __getitem__(self, k):
-        return self.__dict__[k]
+    def __getattribute__(self, k):
+        if k == '_fields':
+            return object.__getattribute__(self,k)
+        for _k, v in self._fields:
+            if _k == k:
+                attr = self.__dict__[k]
+                return attr.get_value()
+        return object.__getattribute__(self,k)
 
+
+    def __setattr__(self, k, v):
+        if not hasattr(self, '_fields'):
+            return object.__setattr__(self, k, v)
+        for _k, _v in self._fields:
+            if _k == k:
+                self.__dict__[k].set_value(v)
+                return
+
+        return object.__setattr__(self, k, v)
 
     @classmethod
-    def _getfields(klass):
+    def getfields(klass):
         """初始化列"""
-        if not klass._fields:
-            bases = klass.__bases__
-            flag = True
-            while flag:
-                flag = False
-                for b in bases:
-                    if issubclass(b, BaseModel):
-                        for k, v in b.__dict__.items():
-                            if issubclass(v.__class__, BaseField):
-                                klass._fields.append((k, v))
-                        bases = b.__bases__
-                        flag = True
-                        break
-            for k, v in klass.__dict__.items():
-                if issubclass(v.__class__, BaseField):
-                    klass._fields.append((k, v))
-            klass._fields.sort(lambda x, y: x[1]._order - y[1]._order)
+        fields = []
+        bases = klass.__bases__
+        flag = True
+        while flag:
+            flag = False
+            for b in bases:
+                if issubclass(b, BaseModel):
+                    for k, v in b.__dict__.items():
+                        if issubclass(v.__class__, BaseField):
+                            fields.append((k, v))
+                    bases = b.__bases__
+                    flag = True
+                    break
+        for k, v in klass.__dict__.items():
+            if issubclass(v.__class__, BaseField):
+                fields.append((k, v))
+        fields.sort(lambda x, y: x[1]._order - y[1]._order)
 
-        return klass._fields
+        return fields
 
 
     @classmethod
     def filter(klass, **kwargs):
         statement = 'select '
+        allfields = klass.getfields()
         fields = []
-        for k, v in klass._getfields():
+        for k, v in allfields:
             fields.append(k)
 
         statement += ','.join(fields) + ' from ' + klass.__name__
@@ -71,7 +100,7 @@ class BaseModel(object):
         for row in rows:
             c = klass()
             for i in range(0, len(row)):
-                c[klass._fields[i][0]] = row[i]
+                setattr(c, allfields[i][0], row[i])
             l.append(c)
 
         return l
@@ -88,7 +117,7 @@ class BaseModel(object):
         statement = 'create table %s' % klass.__name__ 
 
         cols = []
-        for k, v in klass._getfields():
+        for k, v in klass.getfields():
             cols.append(v.format(k))
 
         statement += '(' + ','.join(cols) + ')'
@@ -100,12 +129,12 @@ class BaseModel(object):
     def save(self):
         """保存一条记录，如果已经在则更新,如果一条记录已经存在，永远不要改变主键"""
         klass = self.__class__
-        fields = klass._getfields()
+        fields = klass.getfields()
         fieldnames = []
         fieldvalues = []
         for k, v in fields:
             fieldnames.append(k)
-            fieldvalues.append(self[k])
+            fieldvalues.append(getattr(self,k))
 
         if self.pk is None: # insert
             statement = 'insert into ' + klass.__name__
