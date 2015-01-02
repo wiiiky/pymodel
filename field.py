@@ -2,6 +2,7 @@
 
 
 import itertools
+import time
 
 
 class BaseField(object):
@@ -95,10 +96,27 @@ class IntegerField(IntegerBaseField):
 
 
 class BigIntegerField(IntegerBaseField):
-    """docstring for BigInteger"""
+    """docstring for BigIntegerField"""
 
     def _integertype(self):
         return 'bigint'
+        
+
+class TimestampField(BigIntegerField):
+    """docstring for TimestampField"""
+
+    def __init__(self, **kwargs):
+        super(TimestampField, self).__init__(**kwargs)
+
+    def default_value(self):
+        if self['auto'] is True:
+            if not self['auto_time']:
+                t = time.time()
+                if self['ms'] is True:
+                    t = t*1000
+                self['auto_time'] = int(t)
+            return self['auto_time']
+        return self['default']
 
 
 class BooleanField(BaseField):
