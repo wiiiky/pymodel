@@ -11,15 +11,11 @@ class BaseField(object):
 
     def __init__(self, **kwargs):
         object.__init__(self)
-        self.kwargs = kwargs
         self.null = False
         self._order = BaseField._counter.next()
         for k, v in kwargs.items():
             self[k] = v
         self._value = None
-
-    def __copy__(self):
-        return self.__class__(**self.kwargs)
 
     def __setitem__(self, k, v):
         self.__dict__[k] = v
@@ -61,12 +57,6 @@ class BaseField(object):
             self.exception('%s must be type %s' % (k, str(t)))
         return False
 
-    def klass_name(self):
-        return self.__class__.__name__
-
-    def exception(self, s):
-        raise Exception('%s: %s' % (self.klass_name(), s))
-
     def get_value(self):
         if not self._value:
             return self.default_value()
@@ -74,6 +64,9 @@ class BaseField(object):
 
     def set_value(self, v):
         self._value = v
+
+    def exception(self, s):
+        raise Exception('%s: %s' % (self.__class__.__name__, s))
 
 
 class IntegerBaseField(BaseField):
@@ -108,14 +101,31 @@ class BigIntegerField(IntegerBaseField):
         return 'bigint'
 
 
-class BooleanField(IntegerBaseField):
+class BooleanField(BaseField):
     """docstring for BooleanField"""
 
     def format(self, _id = ''):
         s = '%s tinyint(1)' % _id
         return s + BaseField.format(self)
         
-        
+    def value_type(self):
+        return int
+
+
+    def get_value(self):
+        value = self._value
+        if value is None:
+            value = self.default_value()
+
+        if value:
+            return True
+        return False
+
+    def set_value(self, v):
+        if v:
+            self._value = 1
+        else:
+            self._value = 0
 
 
 class CharField(BaseField):

@@ -13,10 +13,6 @@ class BaseModel(object):
 
     pk = IntegerField(primary_key = True,auto_increment = True)
 
-    # def __new__(klass, **kwargs):
-    #     obj = object.__new__(klass, klass.__name__, (), {})
-    #     return obj
-
     def __init__(self, **kwargs):
         self._fields = []
         self._fields = self.getfields()
@@ -134,7 +130,7 @@ class BaseModel(object):
         fieldvalues = []
         for k, v in fields:
             fieldnames.append(k)
-            fieldvalues.append(getattr(self,k))
+            fieldvalues.append(getattr(self, k))
 
         if self.pk is None: # insert
             statement = 'insert into ' + klass.__name__
