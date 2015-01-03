@@ -70,6 +70,20 @@ class BaseField(object):
         raise Exception('%s: %s' % (self.__class__.__name__, s))
 
 
+    @classmethod
+    def parse_operator(cls, s):
+        """查找操作符"""
+        if s == 'gt':
+            return '>'
+        elif s == 'gte':
+            return '>='
+        elif s == 'lt':
+            return '<'
+        elif s == 'lte':
+            return '<='
+        return '='
+
+
 class IntegerBaseField(BaseField):
     """docstring for IntegerBaseField"""
 

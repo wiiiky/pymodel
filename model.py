@@ -14,9 +14,9 @@ class BaseModel(object):
     pk = IntegerField(primary_key=True, auto_increment=True)
 
     def __init__(self, **kwargs):
-        self._fields = []
+        self._fields = {}
         self._fields = self.getfields()
-        for k, v in self._fields:
+        for k, v in self._fields.items():
             if issubclass(v.__class__, BaseField):
                 f = copy(v)
                 self.__dict__[k] = f
@@ -30,20 +30,18 @@ class BaseModel(object):
     def __getattribute__(self, key):
         if key == '_fields':
             return object.__getattribute__(self, key)
-        for _k, v in self._fields:
-            if _k == key:
-                attr = self.__dict__[key]
-                return attr.get_value()
+        if self._fields.has_key(key):
+            attr = self.__dict__[key]
+            return attr.get_value()
         return object.__getattribute__(self, key)
 
 
     def __setattr__(self, k, v):
         if not hasattr(self, '_fields'):
             return object.__setattr__(self, k, v)
-        for _k, _v in self._fields:
-            if _k == k:
-                self.__dict__[k].set_value(v)
-                return
+        if self._fields.has_key(k):
+            self.__dict__[k].set_value(v)
+            return
 
         return object.__setattr__(self, k, v)
 
@@ -68,15 +66,27 @@ class BaseModel(object):
                 fields.append((k, v))
         fields.sort(lambda x, y: x[1]._order - y[1]._order)
 
-        return fields
+        od = OrderedDict()
+        for k, v in fields:
+            od[k] = v
 
+        return od
+
+    @staticmethod
+    def parse_argumnent(arg):
+        i = arg.find('__')
+        if i>0:
+            return arg[:i], arg[i+2:]
+        elif i<0:
+            return arg, ''
+        raise Exception('invalid argument %s' % arg)
 
     @classmethod
     def filter(cls, **kwargs):
         statement = 'select '
         allfields = cls.getfields()
         fields = []
-        for k, v in allfields:
+        for k, v in allfields.items():
             fields.append(k)
 
         statement += ','.join(fields) + ' from ' + cls.__name__
@@ -86,7 +96,10 @@ class BaseModel(object):
         if len(kwargs) > 0:
             where = []
             for k, v in kwargs.items():
-                where.append('%s = %%s' % k)
+                k, operator = cls.parse_argumnent(k)
+                field = allfields[k]
+                operator = field.parse_operator(operator)
+                where.append('%s %s %%s' % (k, operator))
                 args.append(v)
         if where:
             statement += ' where ' + ' and '.join(where)
@@ -95,8 +108,10 @@ class BaseModel(object):
         l = []
         for row in rows:
             c = cls()
-            for i in range(0, len(row)):
-                setattr(c, allfields[i][0], row[i])
+            i = 0
+            for k, v in allfields.items():
+                setattr(c, k, row[i])
+                i += 1
             l.append(c)
 
         return l
@@ -113,7 +128,7 @@ class BaseModel(object):
         statement = 'create table %s' % cls.__name__
 
         cols = []
-        for k, v in cls.getfields():
+        for k, v in cls.getfields().items():
             cols.append(v.format(k))
 
         if cls.__dict__.has_key('Meta') and isclass(cls.__dict__['Meta']):
@@ -136,7 +151,7 @@ class BaseModel(object):
         fields = klass.getfields()
         fieldnames = []
         fieldvalues = []
-        for k, v in fields:
+        for k, v in fields.items():
             fieldnames.append(k)
             fieldvalues.append(getattr(self, k))
 
