@@ -5,6 +5,7 @@ from field import *
 from mysql import *
 from collections import OrderedDict
 from copy import copy
+from inspect import isclass
 
 
 
@@ -64,7 +65,7 @@ class BaseModel(object):
                     flag = True
                     break
         for k, v in klass.__dict__.items():
-            if issubclass(v.__class__, BaseField):
+            if not isclass(v) and issubclass(v.__class__, BaseField):
                 fields.append((k, v))
         fields.sort(lambda x, y: x[1]._order - y[1]._order)
 
@@ -115,6 +116,14 @@ class BaseModel(object):
         cols = []
         for k, v in klass.getfields():
             cols.append(v.format(k))
+
+        if klass.__dict__.has_key('Meta') and isclass(klass.__dict__['Meta']):
+            meta = klass.__dict__['Meta']
+            if meta.__dict__.has_key['abstract'] and meta.__dict__['abstract']==True:
+                return
+            if meta.__dict__.has_key('unique_together'):
+                unique_together = list(meta.__dict__['unique_together'])
+                cols.append('unique(' + ','.join(unique_together) + ')')
 
         statement += '(' + ','.join(cols) + ')'
         print statement
