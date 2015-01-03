@@ -65,6 +65,8 @@ def db_execute(statement, args=None, **kwargs):
         except MySQLdb.OperationalError as e:
             myconn = db_reconnect()
             continue
+        except Exception as e:
+            raise Exception('%s: %s' % (statement, str(e)))
         return ret
 
-    raise Exception('db_execute fails')
+    raise Exception('%s: %s' % (statement, str(e)))
