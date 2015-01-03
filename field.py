@@ -1,4 +1,4 @@
-#coding=utf8
+# coding=utf8
 
 
 import itertools
@@ -35,13 +35,13 @@ class BaseField(object):
     def value_type(self):
         self.exception('uncompleted')
 
-    def format(self, _id = ''):
+    def format(self, _id=''):
         s = ''
-        if self['null'] == False:
+        if self['null'] is False:
             s += ' not null'
-        if self['primary_key'] == True:
+        if self['primary_key'] is True:
             s += ' primary key'
-        if self['unique'] == True:
+        if self['unique'] is True:
             s += ' unique'
         if self.isinstance('default', self.value_type()):
             if self.value_type() is not str:
@@ -51,7 +51,7 @@ class BaseField(object):
 
         return s
 
-    def isinstance(self, k , t):
+    def isinstance(self, k, t):
         if self[k]:
             if isinstance(self[k], t):
                 return True
@@ -73,36 +73,39 @@ class BaseField(object):
 class IntegerBaseField(BaseField):
     """docstring for IntegerBaseField"""
 
-    def format(self, _id = ''):
+    def format(self, _id=''):
         s = '%s %s' % (_id, self._integertype())
         if self.isinstance('max_length', int):
             s = '%s int(%d)' % (_id, self.max_length)
 
-        if self['auto_increment'] == True:
+        if self['auto_increment'] is True:
             s += ' auto_increment'
 
         return s + BaseField.format(self)
 
-
     def value_type(self):
         return int
-        
+
 
 class IntegerField(IntegerBaseField):
     """docstring for IntegerField"""
 
-    def _integertype(self):
+    @staticmethod
+    def _integertype():
         return 'int'
 
 
 class BigIntegerField(IntegerBaseField):
     """docstring for BigIntegerField"""
 
-    def _integertype(self):
+    @staticmethod
+    def _integertype():
         return 'bigint'
+
 
 class DoubleField(BaseField):
     """docstring for DoubleField"""
+
     def __init__(self, a, b, **kwargs):
         BaseField.__init__(self, **kwargs)
         self.a = int(a)
@@ -117,7 +120,7 @@ class DoubleField(BaseField):
 
     def value_type(self):
         return float
-        
+
 
 class TimestampField(BigIntegerField):
     """docstring for TimestampField"""
@@ -130,7 +133,7 @@ class TimestampField(BigIntegerField):
             if not self['auto_time']:
                 t = time.time()
                 if self['ms'] is True:
-                    t = t*1000
+                    t *= 1000
                 self['auto_time'] = int(t)
             return self['auto_time']
         return self['default']
@@ -139,10 +142,10 @@ class TimestampField(BigIntegerField):
 class BooleanField(BaseField):
     """docstring for BooleanField"""
 
-    def format(self, _id = ''):
+    def format(self, _id=''):
         s = '%s tinyint(1)' % _id
         return s + BaseField.format(self)
-        
+
     def value_type(self):
         return int
 
@@ -166,7 +169,7 @@ class BooleanField(BaseField):
 class CharField(BaseField):
     """docstring for CharField"""
 
-    def format(self, _id = ''):
+    def format(self, _id=''):
         s = ''
         if not self.isinstance('max_length', int):
             raise Exception('CharField')
@@ -190,8 +193,3 @@ class ForeignField(IntegerField):
         s = IntegerField.format(self, _id)
         s += ',foreign key(%s) references %s(pk)' % (_id, self.klass.__name__)
         return s
-        
-        
-
-
-        

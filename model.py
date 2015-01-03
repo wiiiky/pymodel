@@ -1,4 +1,4 @@
-#coding=utf8
+# coding=utf8
 
 
 from field import *
@@ -8,11 +8,10 @@ from copy import copy
 from inspect import isclass
 
 
-
 class BaseModel(object):
     """docstring for BaseModel"""
 
-    pk = IntegerField(primary_key = True,auto_increment = True)
+    pk = IntegerField(primary_key=True, auto_increment=True)
 
     def __init__(self, **kwargs):
         self._fields = []
@@ -22,20 +21,20 @@ class BaseModel(object):
                 f = copy(v)
                 self.__dict__[k] = f
         for k, v in kwargs.items():
-            if hasattr(self, k) :
+            if hasattr(self, k):
                 setattr(self, k, v)
             else:
                 raise Exception('unknown field %s' % k)
 
 
-    def __getattribute__(self, k):
-        if k == '_fields':
-            return object.__getattribute__(self,k)
+    def __getattribute__(self, key):
+        if key == '_fields':
+            return object.__getattribute__(self, key)
         for _k, v in self._fields:
-            if _k == k:
-                attr = self.__dict__[k]
+            if _k == key:
+                attr = self.__dict__[key]
                 return attr.get_value()
-        return object.__getattribute__(self,k)
+        return object.__getattribute__(self, key)
 
 
     def __setattr__(self, k, v):
@@ -49,10 +48,10 @@ class BaseModel(object):
         return object.__setattr__(self, k, v)
 
     @classmethod
-    def getfields(klass):
+    def getfields(cls):
         """初始化列"""
         fields = []
-        bases = klass.__bases__
+        bases = cls.__bases__
         flag = True
         while flag:
             flag = False
@@ -64,7 +63,7 @@ class BaseModel(object):
                     bases = b.__bases__
                     flag = True
                     break
-        for k, v in klass.__dict__.items():
+        for k, v in cls.__dict__.items():
             if not isclass(v) and issubclass(v.__class__, BaseField):
                 fields.append((k, v))
         fields.sort(lambda x, y: x[1]._order - y[1]._order)
@@ -73,18 +72,18 @@ class BaseModel(object):
 
 
     @classmethod
-    def filter(klass, **kwargs):
+    def filter(cls, **kwargs):
         statement = 'select '
-        allfields = klass.getfields()
+        allfields = cls.getfields()
         fields = []
         for k, v in allfields:
             fields.append(k)
 
-        statement += ','.join(fields) + ' from ' + klass.__name__
+        statement += ','.join(fields) + ' from ' + cls.__name__
 
         args = []
         where = None
-        if len(kwargs)>0:
+        if len(kwargs) > 0:
             where = []
             for k, v in kwargs.items():
                 where.append('%s = %%s' % k)
@@ -92,10 +91,10 @@ class BaseModel(object):
         if where:
             statement += ' where ' + ' and '.join(where)
 
-        rows = db_execute(statement,args)
+        rows = db_execute(statement, args)
         l = []
         for row in rows:
-            c = klass()
+            c = cls()
             for i in range(0, len(row)):
                 setattr(c, allfields[i][0], row[i])
             l.append(c)
@@ -103,22 +102,22 @@ class BaseModel(object):
         return l
 
     @classmethod
-    def drop(klass):
-        statement = 'drop table if exists %s' % klass.__name__
+    def drop(cls):
+        statement = 'drop table if exists %s' % cls.__name__
 
         db_execute(statement)
 
 
     @classmethod
-    def create(klass):
-        statement = 'create table %s' % klass.__name__ 
+    def create(cls):
+        statement = 'create table %s' % cls.__name__
 
         cols = []
-        for k, v in klass.getfields():
+        for k, v in cls.getfields():
             cols.append(v.format(k))
 
-        if klass.__dict__.has_key('Meta') and isclass(klass.__dict__['Meta']):
-            meta = klass.__dict__['Meta']
+        if cls.__dict__.has_key('Meta') and isclass(cls.__dict__['Meta']):
+            meta = cls.__dict__['Meta']
             if meta.__dict__.has_key('abstract') and meta.__dict__['abstract'] == True:
                 return
             if meta.__dict__.has_key('unique_together'):
@@ -141,12 +140,12 @@ class BaseModel(object):
             fieldnames.append(k)
             fieldvalues.append(getattr(self, k))
 
-        if self.pk is None: # insert
+        if self.pk is None:  # insert
             statement = 'insert into ' + klass.__name__
-            statement +='(' + ','.join(fieldnames) + ')'
+            statement += '(' + ','.join(fieldnames) + ')'
             statement += ' values(' + ('%s,' * len(fieldnames))[:-1] + ')'
-            self.pk = db_execute(statement, fieldvalues, lastrowid = True)
-        else:               # update
+            self.pk = db_execute(statement, fieldvalues, lastrowid=True)
+        else:  # update
             statement = 'update ' + klass.__name__
             fieldset = []
             for k in fieldnames:

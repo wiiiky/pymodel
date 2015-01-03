@@ -4,6 +4,7 @@
 from setting import *
 import threading
 import MySQLdb
+import time
 
 thread_data = threading.local()
 
@@ -30,7 +31,7 @@ def db_reconnect():
     global DB_HOST,DB_PASSWORD,DB_USER,DB_NAME
     tdata = threading.local()
     try:
-        tdata.myconn = MySQLdb.connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME)
+        tdata.myconn = MySQLdb.connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, charset = 'utf8')
         tdata.myconn.autocommit(1)
     except:
         tdata.myconn = None
@@ -56,17 +57,18 @@ def db_execute(statement, args=None, **kwargs):
         ret = None
         try:
             cursor = myconn.cursor()
-            cursor.execute(statement, args)
+            cursor.execute(statement, args = args)
             if ('lastrowid', True) in kwargs.items():
                 ret = cursor.lastrowid
             else:
                 ret = cursor.fetchall()
             cursor.close()
-        except MySQLdb.OperationalError as e:
+        except MySQLdb.OperationalError as e:   # 如果是数据库连接断开，那么会再次尝试
+            time.sleep(1)
             myconn = db_reconnect()
             continue
         except Exception as e:
-            raise Exception('%s: %s' % (statement, str(e)))
+            raise Exception('%s,%s: %s' % (statement, str(args), str(e)))
         return ret
 
     raise Exception('%s: %s' % (statement, str(e)))
