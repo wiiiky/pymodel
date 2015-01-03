@@ -100,6 +100,23 @@ class BigIntegerField(IntegerBaseField):
 
     def _integertype(self):
         return 'bigint'
+
+class DoubleField(BaseField):
+    """docstring for DoubleField"""
+    def __init__(self, a, b, **kwargs):
+        BaseField.__init__(self, **kwargs)
+        self.a = int(a)
+        self.b = int(b)
+        if self.a < self.b:
+            raise Exception('DoubleField: double(a,b), a must be greater than b')
+
+    def format(self, _id):
+        s = '%s double(%d, %d)' % (_id, self.a, self.b)
+        return s + BaseField.format(self)
+
+
+    def value_type(self):
+        return float
         
 
 class TimestampField(BigIntegerField):

@@ -119,7 +119,7 @@ class BaseModel(object):
 
         if klass.__dict__.has_key('Meta') and isclass(klass.__dict__['Meta']):
             meta = klass.__dict__['Meta']
-            if meta.__dict__.has_key['abstract'] and meta.__dict__['abstract']==True:
+            if meta.__dict__.has_key('abstract') and meta.__dict__['abstract'] == True:
                 return
             if meta.__dict__.has_key('unique_together'):
                 unique_together = list(meta.__dict__['unique_together'])
