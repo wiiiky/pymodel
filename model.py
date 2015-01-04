@@ -98,7 +98,7 @@ class BaseModel(object):
             for k, v in kwargs.items():
                 k, operator = cls.parse_argumnent(k)
                 field = allfields[k]
-                operator = field.parse_operator(operator)
+                operator, v = field.parse_operator(operator, v)
                 where.append('%s %s %%s' % (k, operator))
                 args.append(v)
         if where:

@@ -71,17 +71,17 @@ class BaseField(object):
 
 
     @classmethod
-    def parse_operator(cls, s):
+    def parse_operator(cls, s, v):
         """查找操作符"""
         if s == 'gt':
-            return '>'
+            return '>', v
         elif s == 'gte':
-            return '>='
+            return '>=', v
         elif s == 'lt':
-            return '<'
+            return '<', v
         elif s == 'lte':
-            return '<='
-        return '='
+            return '<=', v
+        return '=', v
 
 
 class IntegerBaseField(BaseField):
@@ -194,6 +194,17 @@ class CharField(BaseField):
 
     def value_type(self):
         return str
+
+    @classmethod
+    def parse_operator(cls, s, v):
+        """查找操作符"""
+        if s == 'exact':
+            return 'like', v 
+        elif s == 'iexact':
+            return 'ilike', v
+        elif s == 'contains':
+            return 'like', ('%' + v + '%')
+        return BaseField.parse_operator(s, v)
 
 
 class ForeignField(IntegerField):
