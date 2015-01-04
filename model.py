@@ -14,12 +14,10 @@ class BaseModel(object):
     pk = IntegerField(primary_key=True, auto_increment=True)
 
     def __init__(self, **kwargs):
-        self._fields = {}
         self._fields = self.getfields()
         for k, v in self._fields.items():
             if issubclass(v.__class__, BaseField):
-                f = copy(v)
-                self.__dict__[k] = f
+                self.__dict__[k] = copy(v)
         for k, v in kwargs.items():
             if hasattr(self, k):
                 setattr(self, k, v)
@@ -30,7 +28,7 @@ class BaseModel(object):
     def __getattribute__(self, key):
         if key == '_fields':
             return object.__getattribute__(self, key)
-        if self._fields.has_key(key):
+        if hasattr(self,'_fields') and self._fields.has_key(key):
             attr = self.__dict__[key]
             return attr.get_value()
         return object.__getattribute__(self, key)
