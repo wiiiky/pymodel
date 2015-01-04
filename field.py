@@ -184,10 +184,6 @@ class BooleanField(BaseField):
             self._value = 0
 
 
-    def get_myvalue(self):
-        return self._value
-
-
 class CharField(BaseField):
     """docstring for CharField"""
 
