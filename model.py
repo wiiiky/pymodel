@@ -97,8 +97,7 @@ class BaseModel(object):
             where = []
             for k, v in kwargs.items():
                 k, operator = cls.parse_argumnent(k)
-                field = allfields[k]
-                operator, v = field.parse_operator(operator, v)
+                operator, v = allfields[k].parse_operator(operator, v)
                 where.append('%s %s %%s' % (k, operator))
                 args.append(v)
         if where:
@@ -148,12 +147,12 @@ class BaseModel(object):
     def save(self):
         """保存一条记录，如果已经在则更新,如果一条记录已经存在，永远不要改变主键"""
         klass = self.__class__
-        fields = klass.getfields()
+        fields = self._fields
         fieldnames = []
         fieldvalues = []
         for k, v in fields.items():
             fieldnames.append(k)
-            fieldvalues.append(getattr(self, k))
+            fieldvalues.append(self.__dict__[k].get_myvalue())
 
         if self.pk is None:  # insert
             statement = 'insert into ' + klass.__name__

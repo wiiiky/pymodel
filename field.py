@@ -63,6 +63,10 @@ class BaseField(object):
             return self.default_value()
         return self._value
 
+    def get_myvalue(self):
+        """返回MySQL数据库中的类型"""
+        return self.get_value()
+
     def set_value(self, v):
         self._value = v
 
@@ -180,6 +184,10 @@ class BooleanField(BaseField):
             self._value = 0
 
 
+    def get_myvalue(self):
+        return self._value
+
+
 class CharField(BaseField):
     """docstring for CharField"""
 
@@ -212,9 +220,62 @@ class ForeignField(IntegerField):
 
     def __init__(self, klass, **kwargs):
         IntegerField.__init__(self, **kwargs)
-        self.klass = klass
+        self._klass = klass
+        self._obj = None
 
     def format(self, _id):
         s = IntegerField.format(self, _id)
-        s += ',foreign key(%s) references %s(pk)' % (_id, self.klass.__name__)
+        s += ',foreign key(%s) references %s(pk)' % (_id, self._klass.__name__)
         return s
+
+
+    def set_value(self, v):
+        if isinstance(v, self._klass):
+            self._value = v.pk
+            self._obj = v
+        elif isinstance(v, int) or isinstance(v,long):
+            self._value = v
+            if self._obj and self._obj.pk != v:
+                self._obj = None
+        elif isinstance(v, type(None)):
+            self._value = None
+            self._obj = None
+        else:
+            raise Exception('invalid type')
+
+
+    def get_value(self):
+        if self._value is None:
+            return None
+        if self._obj and self._obj.pk == self._value:
+            return self._obj
+        try:
+            objs = self._klass.filter(pk=self._value)
+            self._obj = objs[0]
+        except:
+            self._obj = None
+        return self._obj
+
+    def get_myvalue(self):
+        return self._value
+
+
+    @classmethod
+    def parse_operator(cls, s, v):
+        """查找操作符"""
+        if isinstance(v, int):
+            if s == 'id':
+                return '=', v
+            elif s == 'id__gt':
+                return '>', v
+            elif s == 'id__gte':
+                return '>=', v
+            elif s == 'id__lt':
+                return '<', v
+            elif s == 'id__lte':
+                return '<=', v
+        elif s == '':
+            return '=', v.pk
+        raise Exception('unsupported operator')
+
+
