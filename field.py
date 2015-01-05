@@ -259,19 +259,19 @@ class ForeignField(IntegerField):
     @classmethod
     def parse_operator(cls, s, v):
         """查找操作符"""
-        if isinstance(v, int):
-            if s == 'id':
+        if isinstance(v, int) or isinstance(v, long):
+            if s == 'pk':
                 return '=', v
-            elif s == 'id__gt':
+            elif s == 'pk__gt':
                 return '>', v
-            elif s == 'id__gte':
+            elif s == 'pk__gte':
                 return '>=', v
-            elif s == 'id__lt':
+            elif s == 'pk__lt':
                 return '<', v
-            elif s == 'id__lte':
+            elif s == 'pk__lte':
                 return '<=', v
         elif s == '':
             return '=', v.pk
-        raise Exception('unsupported operator')
+        raise Exception('unsupported operator %s %s' % (s, v))
 
 
