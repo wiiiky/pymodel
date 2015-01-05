@@ -2,6 +2,9 @@ from model import *
 from field import *
 
 
+# 创建好test数据库，以及相应的test帐号（或者修改setting.py）
+# 然后在当前目录下执行python解释器，并且import test就会执行 测试例子
+
 
 class Class(BaseModel):
     grade = IntegerField(max_length = 2)
