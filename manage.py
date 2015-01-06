@@ -1,6 +1,7 @@
 #coding=utf8
 
 
+import os
 import inspect
 from model import BaseModel
 from field import ForeignField
