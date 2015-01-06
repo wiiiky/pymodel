@@ -36,14 +36,17 @@ s = Student(name = 'wiky',klass = c)
 s.save()
 s = Student(name = 'Lucy', klass = c)
 s.save()
+s = Student(name = 'Lily', klass = c)
+s.save()
 
 for c in Class.filter():
     print c.grade,c.teacher
 
-for s in Student.filter(klass__pk = c.pk):
-    print s.name,s.age,s.klass.teacher,s.deleted
+s = Student.filter(klass__pk = c.pk)
+for s in Student.filter(klass__pk = c.pk).order_by("-pk"):
+    print s.pk,s.name,s.age,s.klass.teacher,s.deleted
 
 s.delete()
 
 for s in Student.filter(klass = c):
-    print s.name,s.age,s.klass.teacher,s.deleted
+    print s.pk,s.name,s.age,s.klass.teacher,s.deleted

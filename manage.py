@@ -33,7 +33,8 @@ def formodels(module, f, r=False):
     for k, v in module.__dict__.items():
         if inspect.isclass(v) and issubclass(v, BaseModel) and v is not BaseModel:
             l.append(v)
-    l.sort(lambda x, y: modelcompare(x,y))
+    l.sort(key = lambda x: len(getforeigns(x))) # 先根据外键数量进行第一次排序
+    l.sort(cmp = modelcompare)
     if r:
         l.reverse()
     for v in l:

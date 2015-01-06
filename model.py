@@ -6,6 +6,7 @@ from mysql import *
 from collections import OrderedDict
 from copy import copy
 from inspect import isclass
+from olist import ObjectList
 from error import InvalidFieldException, InvalidRecordException, InvalidArgumentException
 
 
@@ -103,7 +104,7 @@ class BaseModel(object):
             statement += ' where ' + ' and '.join(where)
 
         rows = db_execute(statement, args)
-        l = []
+        l = ObjectList()
         for row in rows:
             c = cls()
             i = 0
@@ -113,6 +114,20 @@ class BaseModel(object):
             l.append(c)
 
         return l
+
+    @classmethod
+    def all(cls):
+        """获取所有的记录,filter的简单封装"""
+        return cls.filter()
+
+    @classmethod
+    def get(cls,**kwargs):
+        """获取当个记录，如果没有找到返回None"""
+        objs = cls.filter(**kwargs)
+        if len(objs)>0:
+            return objs[0]
+        return None
+
 
     @classmethod
     def drop(cls):
