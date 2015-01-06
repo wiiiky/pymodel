@@ -1,3 +1,3 @@
 #coding=utf8
 
-__all__ = ['field', 'model']
+__all__ = ['field', 'model', 'manage']

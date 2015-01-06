@@ -1,3 +1,5 @@
+#coding=utf8
+
 from model import *
 from field import *
 
@@ -18,12 +20,11 @@ class Student(BaseModel):
 
     deleted = BooleanField(default = False)
 
-
 from manage import rmdb, syncdb
-
 import sys
 
 __module__ = sys.modules[__name__]
+
 
 rmdb(__module__)
 syncdb(__module__)
@@ -42,6 +43,7 @@ for c in Class.filter():
 for s in Student.filter(klass__pk = c.pk):
     print s.name,s.age,s.klass.teacher,s.deleted
 
+s.delete()
 
 for s in Student.filter(klass = c):
     print s.name,s.age,s.klass.teacher,s.deleted

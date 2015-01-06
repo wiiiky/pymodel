@@ -3,6 +3,7 @@
 
 import itertools
 import time
+from error import *
 
 
 class BaseField(object):
@@ -33,7 +34,7 @@ class BaseField(object):
         return self['default']
 
     def value_type(self):
-        self.exception('uncompleted')
+        raise UncompleteFieldException(self)
 
     def format(self, _id=''):
         s = ''
@@ -55,7 +56,7 @@ class BaseField(object):
         if self[k]:
             if isinstance(self[k], t):
                 return True
-            self.exception('%s must be type %s' % (k, str(t)))
+            raise InvalidTypeException(k, type(self[k]), t)
         return False
 
     def get_value(self):
@@ -69,9 +70,6 @@ class BaseField(object):
 
     def set_value(self, v):
         self._value = v
-
-    def exception(self, s):
-        raise Exception('%s: %s' % (self.__class__.__name__, s))
 
 
     @classmethod
@@ -190,7 +188,7 @@ class CharField(BaseField):
     def format(self, _id=''):
         s = ''
         if not self.isinstance('max_length', int):
-            raise Exception('CharField')
+            pass
         s = '%s varchar(%d)' % (_id, self.max_length)
 
         return s + BaseField.format(self)
@@ -272,6 +270,6 @@ class ForeignField(IntegerField):
                 return '<=', v
         elif s == '':
             return '=', v.pk
-        raise Exception('unsupported operator %s %s' % (s, v))
+        raise UnsupportedOperatorException(s)
 
 

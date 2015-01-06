@@ -5,7 +5,9 @@ import inspect
 from model import BaseModel
 from field import ForeignField
 
+
 def getforeigns(cls):
+    """获取一个模型中所有的外键"""
     allfields = cls.getfields()
     l = []
     for k,v in allfields.items():
@@ -15,6 +17,7 @@ def getforeigns(cls):
     return l
 
 def modelcompare(x, y):
+    """通过外键以及互相之间的依赖性确定前后关系"""
     xf = getforeigns(x)
     yf = getforeigns(y)
     if y in xf:
@@ -25,6 +28,7 @@ def modelcompare(x, y):
 
 
 def formodels(module, f, r=False):
+    """遍历所有的数据模型"""
     l = []
     for k, v in module.__dict__.items():
         if inspect.isclass(v) and issubclass(v, BaseModel) and v is not BaseModel:

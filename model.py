@@ -6,6 +6,7 @@ from mysql import *
 from collections import OrderedDict
 from copy import copy
 from inspect import isclass
+from error import InvalidFieldException, InvalidRecordException, InvalidArgumentException
 
 
 class BaseModel(object):
@@ -22,7 +23,7 @@ class BaseModel(object):
             if hasattr(self, k):
                 setattr(self, k, v)
             else:
-                raise Exception('unknown field %s' % k)
+                raise InvalidFieldException(k)
 
 
     def __getattribute__(self, key):
@@ -45,7 +46,7 @@ class BaseModel(object):
 
     @classmethod
     def getfields(cls):
-        """初始化列"""
+        """获取所有的列（按声明顺序）"""
         fields = []
         bases = cls.__bases__
         flag = True
@@ -77,7 +78,7 @@ class BaseModel(object):
             return arg[:i], arg[i+2:]
         elif i<0:
             return arg, ''
-        raise Exception('invalid argument %s' % arg)
+        raise InvalidArgumentException(arg)
 
     @classmethod
     def filter(cls, **kwargs):
@@ -143,14 +144,14 @@ class BaseModel(object):
 
 
     def save(self):
-        """保存一条记录，如果已经在则更新,如果一条记录已经存在，永远不要改变主键"""
+        """保存一条记录，如果已经在则更新;如果一条记录已经存在，永远不要改变主键"""
         klass = self.__class__
         fields = self._fields
         fieldnames = []
         fieldvalues = []
         for k, v in fields.items():
             fieldnames.append(k)
-            fieldvalues.append(self.__dict__[k].get_myvalue())
+            fieldvalues.append(self.__dict__[k].get_myvalue())  # 这里要获取MySQL对应的数据值
 
         if self.pk is None:  # insert
             statement = 'insert into ' + klass.__name__
@@ -165,3 +166,13 @@ class BaseModel(object):
             statement += ' set ' + ','.join(fieldset)
             statement += ' where pk=' + str(self.pk)
             db_execute(statement, fieldvalues)
+
+
+    def delete(self):
+        """删除记录"""
+        if self.pk is None:
+            raise InvalidRecordException('')
+        statement = 'delete from %s where pk = %%s' % self.__class__.__name__
+        values = [self.pk]
+
+        db_execute(statement, values)
