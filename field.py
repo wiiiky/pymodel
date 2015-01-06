@@ -60,7 +60,7 @@ class BaseField(object):
         return False
 
     def get_value(self):
-        if not self._value:
+        if self._value is None:
             return self.default_value()
         return self._value
 

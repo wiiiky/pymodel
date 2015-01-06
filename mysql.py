@@ -71,4 +71,4 @@ def db_execute(statement, args=None, **kwargs):
             raise Exception('%s,%s: %s' % (statement, str(args), str(e)))
         return ret
 
-    raise Exception('%s: %s' % (statement, str(e)))
+    raise Exception('%s,%s: %s' % (statement, str(args), str(e)))
