@@ -27,6 +27,28 @@ def modelcompare(x, y):
         return -1
     return 0
 
+def sortmodels(l):
+    ret = []
+    while l:
+        if not ret:
+            for m in l[:]:
+                if not getforeigns(m):
+                    ret.append(m)
+                    l.remove(m)
+        else:
+            for m in l[:]:
+                mf = getforeigns(m)
+                flag = True
+                for e in mf:
+                    if not ( e in ret ):
+                        flag = False
+                        break
+                if flag:
+                    ret.append(m)
+                    l.remove(m)
+
+    return ret
+
 
 def formodels(module, f, r=False):
     """遍历所有的数据模型"""
@@ -34,8 +56,7 @@ def formodels(module, f, r=False):
     for k, v in module.__dict__.items():
         if inspect.isclass(v) and issubclass(v, BaseModel) and v is not BaseModel:
             l.append(v)
-    l.sort(key = lambda x: len(getforeigns(x))) # 先根据外键数量进行第一次排序
-    l.sort(cmp = modelcompare)
+    l = sortmodels(l)
     if r:
         l.reverse()
     for v in l:
