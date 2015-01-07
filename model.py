@@ -45,6 +45,11 @@ class BaseModel(object):
 
         return object.__setattr__(self, k, v)
 
+
+    @classmethod
+    def get_tabelname(cls):
+        return cls.__name__
+
     @classmethod
     def getfields(cls):
         """获取所有的列（按声明顺序）"""
@@ -89,7 +94,7 @@ class BaseModel(object):
         for k, v in allfields.items():
             fields.append(k)
 
-        statement += ','.join(fields) + ' from ' + cls.__name__
+        statement += ','.join(fields) + ' from ' + cls.get_tabelname()
 
         args = []
         where = None
@@ -114,7 +119,7 @@ class BaseModel(object):
 
     @classmethod
     def get(cls,**kwargs):
-        """获取当个记录，如果没有找到返回None"""
+        """获取单个记录，如果没有找到返回None"""
         objs = cls.filter(**kwargs)
         if len(objs)>0:
             return objs[0]
@@ -123,14 +128,13 @@ class BaseModel(object):
 
     @classmethod
     def drop(cls):
-        statement = 'drop table if exists %s' % cls.__name__
-
+        statement = 'drop table if exists %s' % cls.get_tabelname()
         db_execute(statement)
 
 
     @classmethod
     def create(cls):
-        statement = 'create table %s' % cls.__name__
+        statement = 'create table %s' % cls.get_tabelname()
 
         cols = []
         for k, v in cls.getfields().items():
@@ -152,8 +156,8 @@ class BaseModel(object):
 
     def save(self):
         """保存一条记录，如果已经在则更新;如果一条记录已经存在，永远不要改变主键"""
-        klass = self.__class__
         fields = self._fields
+        table = self.get_tabelname()
         fieldnames = []
         fieldvalues = []
         for k, v in fields.items():
@@ -161,12 +165,12 @@ class BaseModel(object):
             fieldvalues.append(self.__dict__[k].get_myvalue())  # 这里要获取MySQL对应的数据值
 
         if self.pk is None:  # insert
-            statement = 'insert into ' + klass.__name__
+            statement = 'insert into ' + table
             statement += '(' + ','.join(fieldnames) + ')'
             statement += ' values(' + ('%s,' * len(fieldnames))[:-1] + ')'
             self.pk = db_execute(statement, fieldvalues, lastrowid=True)
         else:  # update
-            statement = 'update ' + klass.__name__
+            statement = 'update ' + table
             fieldset = []
             for k in fieldnames:
                 fieldset.append(k + '=%s')
@@ -179,7 +183,7 @@ class BaseModel(object):
         """删除记录"""
         if self.pk is None:
             raise InvalidRecordException('')
-        statement = 'delete from %s where pk = %%s' % self.__class__.__name__
+        statement = 'delete from %s where pk = %%s' % self.get_tabelname()
         values = [self.pk]
 
         db_execute(statement, values)

@@ -4,9 +4,59 @@ PyModel
 This is a simple django model implement, which does **not** depend on django framework.
 
 
-		This project is in developing... ...
-		I will document it when I think it's necessary!
+		This project is under development... ...
 
+
+##Usage
+
+assume source directory is the workspace.
+
+####*Settting*
+MySQL database infomation should be set in setting.py
+
+		MYSQL_SETTINGS = {
+		    'host':'localhost',
+		    'name':'test',
+		    'user':'test',
+		    'password':'123456',
+		    }
+
+Of course, with the database and user created.
+
+####*Model*
+
+		from model import *
+		from field import *
+
+		class User(BaseModel):
+			name = CharField(max_length = 100)
+			age = IntegerField(max_length = 3, default = 0)
+			nick = CharField(max_length = 100, null=True)
+			deleted = BooleanField(default=False)
+
+
+		class Group(BaseModel):
+			name = CharField(max_length = 100, unique = True)
+			num = IntegerField(default = 0)
+
+		class UserGroup(BaseModel):
+			user = ForeignField(User)
+			group = ForeignField(Group)
+
+			class Meta:
+				unique_together=('user','group')
+
+save above code in *models.py*
+
+To create the MySQL tables you can use *syncdb()* defined in* manage.py*
+. The argument is the module object which contain the model classes.
+	
+		import models
+		import manage
+
+		manage.syncdb(models)
+
+####*To Be Continue*
 
 ##Contact
 Be free to email me if you have interest
