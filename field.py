@@ -202,10 +202,12 @@ class CharField(BaseField):
         """查找操作符"""
         if s == 'exact':
             return 'like', v 
-        elif s == 'iexact':
-            return 'ilike', v
         elif s == 'contains':
             return 'like', ('%' + v + '%')
+        elif s == 'startswith':
+            return 'like', (v + '%')
+        elif s == 'endswith':
+            return 'like', ('%' + v)
         return BaseField.parse_operator(s, v)
 
 
