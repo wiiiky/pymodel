@@ -103,15 +103,7 @@ class BaseModel(object):
         if where:
             statement += ' where ' + ' and '.join(where)
 
-        rows = db_execute(statement, args)
-        l = ObjectList()
-        for row in rows:
-            c = cls()
-            i = 0
-            for k, v in allfields.items():
-                setattr(c, k, row[i])
-                i += 1
-            l.append(c)
+        l = ObjectList(cls, statement, args, allfields)
 
         return l
 

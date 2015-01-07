@@ -42,9 +42,13 @@ s.save()
 for c in Class.filter():
     print c.grade,c.teacher
 
+print '---------------------------------------'
+
 s = Student.filter(klass__pk = c.pk)
-for s in Student.filter(klass__pk = c.pk).order_by("-pk"):
+for s in Student.filter(klass__pk = c.pk).order_by("-pk").limit(2):
     print s.pk,s.name,s.age,s.klass.teacher,s.deleted
+
+print '---------------------------------------'
 
 s.delete()
 
