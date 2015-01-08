@@ -48,7 +48,7 @@ Of course, with the database and user created.
 
 save above code in *models.py*
 
-To create the MySQL tables you can use *syncdb()* defined in* manage.py*
+To create the MySQL tables you can use *syncdb()* defined in *manage.py*
 . The argument is the module object which contain the model classes.
 	
 		import models
@@ -56,7 +56,17 @@ To create the MySQL tables you can use *syncdb()* defined in* manage.py*
 
 		manage.syncdb(models)
 
+####*filter*
+To filter record
+
+		objs = User.filter(name__startswith='w')
+		objs.order_by('-pk').limit(3)
+You can call *filter()*, *order_by()* and *limit()* in any order before first time to use objects in **objs**(objs[0], len(objs),etc...). Which means the database query occurs when you first time use *objs*. In other hand, *filter()* *order_by()* and *limit()* means nothing after using *objs*.
+
 ####*To Be Continue*
+
+##Correct
+Please correct my English!
 
 ##Contact
 Be free to email me if you have interest
