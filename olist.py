@@ -79,3 +79,25 @@ class ObjectList(object):
     def limit(self, lmt):
         self._limit = ' limit %d' % lmt
         return self
+
+
+    def filter(self, **kwargs):
+        args = []
+        where = None
+        if len(kwargs) > 0:
+            where = []
+            allfields = self._klass.getfields()
+            for k, v in kwargs.items():
+                k, operator = self._klass.parse_argumnent(k)
+                operator, v = allfields[k].parse_operator(operator, v)
+                where.append('%s %s %%s' % (k, operator))
+                args.append(v)
+        if where:
+            if 'where' in self._statement:
+                self._statement += ' and '
+            else:
+                self._statement += ' where '
+            self._statement += ' and '.join(where)
+            self._args.extend(args)
+
+        return self

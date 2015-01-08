@@ -44,8 +44,10 @@ for c in Class.filter():
 
 print '---------------------------------------'
 
-s = Student.filter(klass__pk = c.pk)
-for s in Student.filter(klass__pk = c.pk, pk__gt=0, pk__lte=2).order_by("-pk").limit(3):
+ss = Student.filter(klass__pk = c.pk)
+ss = Student.filter()
+ss.filter(pk__gte=0,pk__lte=2)
+for s in ss.order_by("-pk").limit(3):
     print s.pk,s.name,s.age,s.klass.teacher,s.deleted
 
 print '---------------------------------------'
