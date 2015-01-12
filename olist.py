@@ -80,6 +80,9 @@ class ObjectList(object):
         self._limit = ' limit %d' % lmt
         return self
 
+    def count(self):
+        return self.__len__()
+
 
     def filter(self, **kwargs):
         args = []
@@ -89,9 +92,12 @@ class ObjectList(object):
             allfields = self._klass.getfields()
             for k, v in kwargs.items():
                 k, operator = self._klass.parse_argumnent(k)
-                operator, v = allfields[k].parse_operator(operator, v)
-                where.append('%s %s %%s' % (k, operator))
-                args.append(v)
+                operator, v, st = allfields[k].parse_operator(operator, v)
+                if not st:
+                    where.append('%s %s %%s' % (k, operator))
+                else:
+                    where.append('%s %s %s' % (k, operator, st))
+                args.extend(v)
         if where:
             if 'where' in self._statement:
                 self._statement += ' and '

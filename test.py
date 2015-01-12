@@ -20,6 +20,10 @@ class Student(BaseModel):
 
     deleted = BooleanField(default = False)
 
+class Parent(BaseModel):
+    name = CharField(max_length = 100)
+    stu = ForeignField(Student)
+
 from manage import rmdb, syncdb
 import sys
 
@@ -34,10 +38,16 @@ c = Class(grade = 1,teacher ='Good')
 c.save()
 s = Student(name = 'wiky',klass = c)
 s.save()
+p=Parent(name='ok',stu=s)
+p.save()
 s = Student(name = 'Lucy', klass = c)
 s.save()
 s = Student(name = 'Lily', klass = c)
 s.save()
+
+p = Parent(name ='what', stu=s)
+p.save()
+
 
 for c in Class.filter():
     print c.grade,c.teacher
@@ -45,6 +55,7 @@ for c in Class.filter():
 print '---------------------------------------'
 
 ss = Student.filter(klass__pk = c.pk)
+print len(ss)
 ss = Student.filter()
 ss.filter(pk__gte=0,pk__lte=2)
 for s in ss.order_by("-pk").limit(3):
@@ -52,7 +63,17 @@ for s in ss.order_by("-pk").limit(3):
 
 print '---------------------------------------'
 
-s.delete()
+# s.delete()
 
 for s in Student.filter(klass = c):
     print s.pk,s.name,s.age,s.klass.teacher,s.deleted
+
+
+parents = Parent.filter(stu__klass__teacher='Good')
+for p in parents:
+    print p.name ,p.stu.name, p.stu.klass.teacher
+
+
+parents = Parent.filter(stu=s)
+for p in parents:
+    print p.name ,p.stu.name, p.stu.klass.teacher

@@ -96,19 +96,8 @@ class BaseModel(object):
 
         statement += ','.join(fields) + ' from ' + cls.get_tabelname()
 
-        args = []
-        where = None
-        if len(kwargs) > 0:
-            where = []
-            for k, v in kwargs.items():
-                k, operator = cls.parse_argumnent(k)
-                operator, v = allfields[k].parse_operator(operator, v)
-                where.append('%s %s %%s' % (k, operator))
-                args.append(v)
-        if where:
-            statement += ' where ' + ' and '.join(where)
-
-        l = ObjectList(cls, statement, args, allfields)
+        l = ObjectList(cls, statement, [], allfields)
+        l.filter(**kwargs)
 
         return l
 

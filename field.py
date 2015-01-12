@@ -71,19 +71,17 @@ class BaseField(object):
     def set_value(self, v):
         self._value = v
 
-
-    @classmethod
-    def parse_operator(cls, s, v):
-        """查找操作符"""
+    def parse_operator(self, s, v):
+        """返回三个参数，第一个表示操作符，第二个表示用于比较的值，第三个表示是否是一个表达式，如果是则是表示表达式的字符串，否则为None"""
         if s == 'gt':
-            return '>', v
+            return '>', [v], None
         elif s == 'gte':
-            return '>=', v
+            return '>=', [v], None
         elif s == 'lt':
-            return '<', v
+            return '<', [v],None
         elif s == 'lte':
-            return '<=', v
-        return '=', v
+            return '<=', [v],None
+        return '=', [v], None
 
 
 class IntegerBaseField(BaseField):
@@ -197,18 +195,24 @@ class CharField(BaseField):
     def value_type(self):
         return str
 
-    @classmethod
-    def parse_operator(cls, s, v):
+    def parse_operator(self, s, v):
         """查找操作符"""
         if s == 'exact':
-            return 'like', v 
+            return 'like', [v], None
         elif s == 'contains':
-            return 'like', ('%' + v + '%')
+            return 'like', ['%' + v + '%'], None
         elif s == 'startswith':
-            return 'like', (v + '%')
+            return 'like', [v + '%'], None
         elif s == 'endswith':
-            return 'like', ('%' + v)
-        return BaseField.parse_operator(s, v)
+            return 'like', ['%' + v], None
+        a,b,c= BaseField.parse_operator(self,s, v)
+        return a,b,c
+
+class LongTextField(CharField):
+
+    def format(self, _id):
+        s = '%s longtext' % _id
+        return s + BaseField.format(self)
 
 
 class ForeignField(IntegerField):
@@ -255,23 +259,35 @@ class ForeignField(IntegerField):
     def get_myvalue(self):
         return self._value
 
+    @staticmethod
+    def parse_argumnent(arg):
+        i = arg.find('__')
+        if i>=0:
+            return arg[:i], arg[i+2:]
+        return arg, ''
 
-    @classmethod
-    def parse_operator(cls, s, v):
+    def parse_operator(self, s, v):
         """查找操作符"""
-        if isinstance(v, int) or isinstance(v, long):
-            if s == 'pk':
-                return '=', v
-            elif s == 'pk__gt':
-                return '>', v
-            elif s == 'pk__gte':
-                return '>=', v
-            elif s == 'pk__lt':
-                return '<', v
-            elif s == 'pk__lte':
-                return '<=', v
-        elif s == '':
-            return '=', v.pk
-        raise UnsupportedOperatorException(s)
+        if s=='':
+            return '=',[v.pk],None
+
+        f, o = self.parse_argumnent(s)
+        allfields = self._klass.getfields()
+
+        if not allfields.has_key(f):
+            raise UnsupportedOperatorException(s)
+
+        field = allfields[f]
+
+        value = []
+        o, v, st =field.parse_operator(o, v)    # 支持递归
+        if not st:
+            statement = '(select pk from %s where %s %s %%s)' % (self._klass.__name__, f, o)
+        else:
+            statement = '(select pk from %s where %s %s %s)' % (self._klass.__name__, f, o, st)
+        value.extend(v)
+
+        return 'in',value, statement
+
 
 
