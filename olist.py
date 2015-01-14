@@ -13,7 +13,7 @@ class ObjectList(object):
         self._statement = statement
         self._args = args
         self._allfields = allfields
-        self._orderby = ''
+        self._orderby = 'order by pk'   # default
         self._limit = ''
 
         self._list = None
