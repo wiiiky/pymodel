@@ -80,7 +80,10 @@ class BaseField(object):
         elif s == 'lt':
             return '<', [v],None
         elif s == 'lte':
-            return '<=', [v],None
+            return '<=', [v], None
+        elif s== 'in':
+            st='(' + ','.join(['%s']*len(v)) + ')'
+            return 'in', v, st
         return '=', [v], None
 
 
