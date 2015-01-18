@@ -24,7 +24,10 @@ class ObjectList(object):
             raise InvalidTypeException('index', type(i), int)
         self.check()        # 第一次引用的时候才真正查询数据库
 
-        return self._list[i]
+        try:
+            return self._list[i]
+        except:
+            return None
 
     def __str__(self):
         self.check()

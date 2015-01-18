@@ -176,3 +176,11 @@ class BaseModel(object):
         values = [self.pk]
 
         db_execute(statement, values)
+
+
+    @classmethod
+    def getlastpk(cls,**kwargs):
+        rows=cls.filter(**kwargs).order_by('-pk').limit(1)
+        if rows:
+            return rows[0].pk
+        return 0

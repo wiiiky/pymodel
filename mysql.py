@@ -31,11 +31,11 @@ def db_reconnect():
     global DB_HOST,DB_PASSWORD,DB_USER,DB_NAME
     tdata = threading.local()
     try:
-        tdata.myconn = MySQLdb.connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, charset = 'utf8')
-        tdata.myconn.autocommit(1)
+        tdata.mysql = MySQLdb.connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, charset = 'utf8')
+        tdata.mysql.autocommit(1)
     except:
-        tdata.myconn = None
-    return tdata.myconn
+        tdata.mysql = None
+    return tdata.mysql
 
 
 def db_connection():
@@ -44,7 +44,7 @@ def db_connection():
     tdata = threading.local()
     myconn = None
     try:
-        myconn = tdata.myconn
+        myconn = tdata.mysql
     except:
         myconn = db_reconnect()
 

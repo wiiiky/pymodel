@@ -84,6 +84,8 @@ class BaseField(object):
         elif s== 'in':
             st='(' + ','.join(['%s']*len(v)) + ')'
             return 'in', v, st
+        elif s== 'ne':
+            return '!=', [v],None
         return '=', [v], None
 
 
@@ -273,6 +275,8 @@ class ForeignField(IntegerField):
         """查找操作符"""
         if s=='':
             return '=',[v.pk],None
+        elif s=='ne':
+            return '!=',[v.pk],None
 
         f, o = self.parse_argumnent(s)
         allfields = self._klass.getfields()
